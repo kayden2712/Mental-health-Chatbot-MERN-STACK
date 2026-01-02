@@ -50,6 +50,8 @@ The Mental Health Chatbot is a MERN Stack application designed to assist users i
     npm install
     cd ../chatbot
     npm install
+    cd ../mobile
+    npn install
     ```
 
 5. **Chạy project:**
@@ -58,10 +60,17 @@ The Mental Health Chatbot is a MERN Stack application designed to assist users i
     cd Backend
     npm start
     
-    # Terminal 2 - Frontend
+    # Terminal 2 - Frontend wed
     cd chatbot
     npm start
-    ```
+   
+
+    # Terminal 3 - Frontend mobile
+    cd mobile
+    npx expo start (npm start)
+    (tải expo go trên dien thoai, quet ma)
+ ```
+
 
 6. **Truy cập:** http://localhost:3000
 
