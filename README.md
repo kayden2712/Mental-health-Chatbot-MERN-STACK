@@ -52,6 +52,7 @@ The Mental Health Chatbot is a MERN Stack application designed to assist users i
     npm install
     cd ../mobile
     npn install
+    npx expo install expo-linear-gradient
     ```
 
 5. **Chạy project:**
