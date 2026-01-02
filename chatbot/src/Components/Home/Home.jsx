@@ -38,7 +38,7 @@ function Home() {
             </div>
         </div>
         <div className="abouts">
-         <Link to='/check'><button class="btn">
+         <Link to='/check'><button className="btn">
          TRY CHATBOT
         </button></Link> 
           <div className="about-topic">

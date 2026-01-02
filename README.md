@@ -13,37 +13,57 @@ The Mental Health Chatbot is a MERN Stack application designed to assist users i
 - **Data Analytics Potential**: Tracks user interactions and can provide insights into mental health trends.
 
 ### Technologies Used
-- **MongoDB**: For storing user data and session information.
+- **MySQL**: For storing user data and session information.
 - **Express.js**: Backend framework handling API requests.
 - **React.js**: Frontend framework for the user interface and chatbot interaction.
 - **Node.js**: Server-side environment.
-- **Firebase Authentication**: For secure user sign-up and login.
+- **Google Gemini AI**: For chatbot intelligence and responses.
+- **JWT Authentication**: For secure user sign-up and login.
 
 ### Installation Instructions
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/your-username/mental-health-chatbot.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd mental-health-chatbot
-    ```
-3. Install dependencies for both client and server:
-    ```bash
-    cd client
-    npm install
-    cd ../server
-    npm install
-    ```
-4. Set up environment variables for MongoDB, Firebase, and other API keys.
 
-5. Run the server and client:
+**Chi tiết đầy đủ xem file [SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+#### Tóm tắt nhanh:
+
+1. **Cài đặt MySQL:**
+    - Tải XAMPP: https://www.apachefriends.org/
+    - Hoặc MySQL: https://dev.mysql.com/downloads/mysql/
+
+2. **Tạo database:**
     ```bash
-    cd server
+    # Mở MySQL và chạy file Backend/database.sql
+    mysql -u root
+    source Backend/database.sql
+    ```
+
+3. **Cấu hình API Key:**
+    - Lấy Google Gemini API key: https://makersuite.google.com/app/apikey
+    - Tạo file `Backend/.env`:
+    ```
+    API_KEY=your_google_gemini_api_key
+    ```
+
+4. **Cài đặt dependencies:**
+    ```bash
+    cd Backend
+    npm install
+    cd ../chatbot
+    npm install
+    ```
+
+5. **Chạy project:**
+    ```bash
+    # Terminal 1 - Backend
+    cd Backend
     npm start
-    cd ../client
+    
+    # Terminal 2 - Frontend
+    cd chatbot
     npm start
     ```
+
+6. **Truy cập:** http://localhost:3000
 
 ### Usage
 - Visit the web application and sign up as a user.

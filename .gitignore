@@ -1,0 +1,13 @@
+# Node
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Env
+.env
+git rm -r --cached node_modules

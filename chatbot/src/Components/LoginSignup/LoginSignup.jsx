@@ -12,7 +12,7 @@ function LoginSignup() {
 
 
   const login=async()=>{
-    console.log("Login function");
+    console.log("Login function", { email: formData.email, password: formData.password });
     let responsedata;
     await fetch('http://localhost:4000/login',{
       method:'POST',
@@ -28,8 +28,10 @@ function LoginSignup() {
       console.log("Logged in");
       window.location.replace('/home');
     }
-    else
-    alert(responsedata.error);
+    else {
+      console.log("Login failed:", responsedata.error);
+      alert(responsedata.error);
+    }
   }
 
   const signup=async()=>{
@@ -68,8 +70,7 @@ function LoginSignup() {
         </div>
         <button onClick={()=>{state==="Login"?login():signup()}}>{state}</button>
         {state==="Signup"?<p className='loginsignup-login'>Already have an account ? <span onClick={()=>setState("Login")}>Login</span></p>
-        :<p className='loginsignup-login'>Don't have an account?<p className='loginsignup-login'>   
-        Create an account <span onClick={()=>setState("Signup")}>Click here</span></p> </p>
+        :<p className='loginsignup-login'>Don't have an account? Create an account <span onClick={()=>setState("Signup")}>Click here</span></p>
   }
       </div>
     </div>
