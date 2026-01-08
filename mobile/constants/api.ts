@@ -19,6 +19,9 @@ export const API_BASE_URL = getBaseUrl();
 
 export const API_ENDPOINTS = {
   chat: `${API_BASE_URL}/chat`,
+  signup: `${API_BASE_URL}/signup`,
+  login: `${API_BASE_URL}/login`,
   booking: `${API_BASE_URL}/booking`,
-  // Add more endpoints as needed
+  userBookings: `${API_BASE_URL}/user-bookings`,
+  goodThoughts: `${API_BASE_URL}/goodthoughts`,
 };
