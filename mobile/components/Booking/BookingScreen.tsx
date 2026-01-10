@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { API_ENDPOINTS } from '@/constants/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -32,6 +33,10 @@ export default function BookingScreen() {
   const [address, setAddress] = useState('');
   const [timeslot, setTimeslot] = useState('');
   const [date, setDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [showBookings, setShowBookings] = useState(false);
@@ -59,6 +64,38 @@ export default function BookingScreen() {
       }
     } catch (error) {
       console.error('Failed to load bookings:', error);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTime = (date: Date) => {
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+      setDate(formatDate(selectedDate));
+    }
+  };
+
+  const onTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      setSelectedTime(selectedTime);
+      setTimeslot(formatTime(selectedTime));
     }
   };
 
@@ -204,21 +241,42 @@ export default function BookingScreen() {
                   numberOfLines={3}
                 />
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Time Slot (e.g., 10:00 AM - 11:00 AM)"
-                  placeholderTextColor="#999"
-                  value={timeslot}
-                  onChangeText={setTimeslot}
-                />
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.datePickerButtonText}>
+                    📅 {date || 'Select Date'}
+                  </Text>
+                </TouchableOpacity>
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Date (e.g., 2026-01-15)"
-                  placeholderTextColor="#999"
-                  value={date}
-                  onChangeText={setDate}
-                />
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onDateChange}
+                    minimumDate={new Date()}
+                  />
+                )}
+
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Text style={styles.datePickerButtonText}>
+                    🕒 {timeslot || 'Select Time'}
+                  </Text>
+                </TouchableOpacity>
+
+                {showTimePicker && (
+                  <DateTimePicker
+                    value={selectedTime}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onTimeChange}
+                  />
+                )}
 
                 <TouchableOpacity
                   style={styles.submitButton}
@@ -317,6 +375,19 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+  },
+  datePickerButton: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
+  },
+  datePickerButtonText: {
+    fontSize: 16,
+    color: '#333',
   },
   submitButton: {
     backgroundColor: '#667eea',
