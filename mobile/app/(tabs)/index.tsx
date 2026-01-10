@@ -14,7 +14,7 @@ export default function HomeScreen() {
   const { isAuthenticated } = useAuth();
   const [thought, setThought] = useState<Thought | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const fadeAnim = new Animated.Value(0);
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     fetchThought();
@@ -23,8 +23,15 @@ export default function HomeScreen() {
   const fetchThought = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching thought from:', API_ENDPOINTS.goodThoughts);
       const response = await fetch(API_ENDPOINTS.goodThoughts);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Received thought:', data);
       
       // Fade out
       Animated.timing(fadeAnim, {
@@ -42,9 +49,10 @@ export default function HomeScreen() {
       });
     } catch (error) {
       console.error('Failed to fetch thought:', error);
+      console.error('API endpoint:', API_ENDPOINTS.goodThoughts);
       setThought({
         id: 0,
-        joketext: 'Stay positive and keep smiling! 😊',
+        joketext: 'Stay positive and keep smiling! 😊\n\n(Error connecting to server - please check if backend is running)',
       });
       Animated.timing(fadeAnim, {
         toValue: 1,

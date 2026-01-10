@@ -110,7 +110,7 @@ export default function Chatbot() {
 
   const renderMessage = (item: Message, index: number) => {
     const isUser = item.role === 'user';
-    
+
     return (
       <View
         key={index}
@@ -199,8 +199,8 @@ export default function Chatbot() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       {/* Header with Gradient */}
       <LinearGradient
@@ -227,6 +227,7 @@ export default function Chatbot() {
           style={styles.chatHistory}
           contentContainerStyle={styles.chatHistoryContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Welcome Message */}
           {chatHistory.length === 0 && (
@@ -239,7 +240,7 @@ export default function Chatbot() {
                 I'm here to support your mental health journey.{'\n'}
                 How are you feeling today?
               </Text>
-              
+
               {/* Quick Reply Buttons */}
               <View style={styles.quickRepliesContainer}>
                 <TouchableOpacity
@@ -275,6 +276,9 @@ export default function Chatbot() {
 
           {/* Typing Indicator */}
           {isLoading && renderTypingIndicator()}
+          
+          {/* Bottom Spacer to prevent messages from being hidden */}
+          <View style={{ height: 20 }} />
         </ScrollView>
 
         {/* Input Area */}
@@ -358,7 +362,7 @@ const styles = StyleSheet.create({
   },
   chatHistoryContent: {
     padding: 16,
-    paddingBottom: 8,
+    paddingBottom: 20,
   },
   welcomeContainer: {
     alignItems: 'center',
