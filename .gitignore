@@ -10,4 +10,11 @@ node_modules/
 
 # Env
 .env
+
+# Deprecated/Unused
+chatbot/
+_chatbot_old/
+package.json
+package-lock.json
+
 git rm -r --cached node_modules

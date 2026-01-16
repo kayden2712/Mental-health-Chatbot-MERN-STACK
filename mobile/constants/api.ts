@@ -1,6 +1,5 @@
 // TODO: Replace with your computer's IP address
-const YOUR_COMPUTER_IP = '192.168.1.5'; 
-
+const YOUR_COMPUTER_IP = '10.210.106.133'; 
 const getBaseUrl = () => {
   if (__DEV__) {
     // For Expo Go, always use your computer's IP address

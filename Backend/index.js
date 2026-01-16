@@ -8,8 +8,16 @@ const jwt = require('jsonwebtoken');
 dotenv.config();
 
 const app = express();
+
+// CORS configuration for mobile
+const corsOptions = {
+    origin: '*', // Allow all origins for mobile development
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors());
 const port = 4000;
 
 // ----------------- MySQL Connection -----------------
@@ -197,9 +205,10 @@ app.get('/goodthoughts', (req, res) => {
 });
 
 // ----------------- START SERVER -----------------
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`\n=================================`);
     console.log(`✓ Server running on port ${port}`);
     console.log(`✓ API URL: http://localhost:${port}`);
+    console.log(`✓ For mobile: http://YOUR_IP:${port}`);
     console.log(`=================================\n`);
 });
