@@ -2,8 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const mysql = require('mysql2/promise');
-const jwt = require('jsonwebtoken');
+// const mysql = require('mysql2/promise');
+// const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -18,26 +18,30 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 // ----------------- MySQL Connection -----------------
-const db = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: "12345",
-    database: "healthbot",
-});
+// COMMENTED OUT FOR RENDER FREE TIER (NO DATABASE)
+// const db = mysql.createPool({
+//     host: "localhost",
+//     user: "root",
+//     password: "12345",
+//     database: "healthbot",
+// });
 
 // Test database connection
-db.getConnection()
-    .then(connection => {
-        console.log('✓ Database connected successfully');
-        connection.release();
-    })
-    .catch(err => {
-        console.error('✗ Database connection failed:', err.message);
-        console.error('Please ensure MySQL is running and the healthbot database exists');
-    });
+// db.getConnection()
+//     .then(connection => {
+//         console.log('✓ Database connected successfully');
+//         connection.release();
+//     })
+//     .catch(err => {
+//         console.error('✗ Database connection failed:', err.message);
+//         console.error('Please ensure MySQL is running and the healthbot database exists');
+//     });
+
+console.log('⚠️  Database features disabled for production deployment');
+console.log('✓ Chatbot and GoodThoughts endpoints available');
 
 // ----------------- Gemini API Setup (REST API) -----------------
 const API_KEY = process.env.API_KEY;
@@ -98,6 +102,15 @@ app.post('/chat', async (req, res) => {
 });
 
 // ----------------- SIGNUP -----------------
+// DISABLED FOR PRODUCTION (NO DATABASE)
+app.post('/signup', async (req, res) => {
+    res.status(503).json({ 
+        success: false, 
+        error: "Database features not available in production. Please use chatbot features only." 
+    });
+});
+
+/*
 app.post('/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -125,8 +138,18 @@ app.post('/signup', async (req, res) => {
         res.status(500).json({ success: false, errors: err.message });
     }
 });
+*/
 
 // ----------------- LOGIN -----------------
+// DISABLED FOR PRODUCTION (NO DATABASE)
+app.post('/login', async (req, res) => {
+    res.status(503).json({ 
+        success: false, 
+        error: "Database features not available in production. Please use chatbot features only." 
+    });
+});
+
+/*
 app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -151,8 +174,18 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+*/
 
 // ----------------- BOOKING -----------------
+// DISABLED FOR PRODUCTION (NO DATABASE)
+app.post('/booking', async (req, res) => {
+    res.status(503).json({ 
+        success: false, 
+        error: "Database features not available in production. Please use chatbot features only." 
+    });
+});
+
+/*
 app.post('/booking', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -176,8 +209,18 @@ app.post('/booking', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+*/
 
 // ----------------- USER BOOKINGS -----------------
+// DISABLED FOR PRODUCTION (NO DATABASE)
+app.get('/user-bookings', async (req, res) => {
+    res.status(503).json({ 
+        success: false, 
+        error: "Database features not available in production. Please use chatbot features only." 
+    });
+});
+
+/*
 app.get('/user-bookings', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -190,6 +233,7 @@ app.get('/user-bookings', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+*/
 
 // ----------------- RANDOM GOOD THOUGHTS -----------------
 const thoughts = [
