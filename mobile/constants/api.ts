@@ -1,11 +1,11 @@
-// TODO: Replace with your computer's IP address
+// TODO: Thay thế bằng địa chỉ IP của máy tính của bạn
 const YOUR_COMPUTER_IP = '192.168.1.5'; 
 const getBaseUrl = () => {
   if (__DEV__) {
-    // For Expo Go, always use your computer's IP address
+    // Đối với Expo Go, luôn sử dụng địa chỉ IP của máy tính của bạn
     return `http://${YOUR_COMPUTER_IP}:4000`;
   }
-  // Production URL - Render backend
+  // URL sản phẩm - Backend Render
   return 'https://wellbot-7dbu.onrender.com';
 };
 
@@ -20,13 +20,13 @@ export const API_ENDPOINTS = {
   goodThoughts: `${API_BASE_URL}/goodthoughts`,
   clinics: `${API_BASE_URL}/clinics`,
   tts: `${API_BASE_URL}/tts`,
-  // Chat history endpoints
+  // Các endpoint lịch sử chat
   chatSessions: `${API_BASE_URL}/chat-sessions`,
   chatSessionMessages: (sessionId: string | number) => `${API_BASE_URL}/chat-sessions/${sessionId}/messages`,
   deleteSession: (sessionId: string | number) => `${API_BASE_URL}/chat-sessions/${sessionId}`,
   
   // =====================================================
-  // CLINIC ADMIN ENDPOINTS
+  // CÁC ENDPOINT QUẢN TRỊ PHÒNG KHÁM
   // =====================================================
   clinicLogin: `${API_BASE_URL}/clinic/login`,
   clinicBookings: `${API_BASE_URL}/clinic/bookings`,

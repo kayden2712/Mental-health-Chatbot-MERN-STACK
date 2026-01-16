@@ -69,7 +69,7 @@ export default function MedicalRecordsScreen() {
   useEffect(() => {
     let filtered = records;
     
-    // Filter by search query
+    // Lọc theo truy vấn tìm kiếm
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -80,7 +80,7 @@ export default function MedicalRecordsScreen() {
       );
     }
     
-    // Filter by severity
+    // Lọc theo mức độ nghiêm trọng
     if (severityFilter !== 'all') {
       filtered = filtered.filter((r) => r.severity === severityFilter);
     }

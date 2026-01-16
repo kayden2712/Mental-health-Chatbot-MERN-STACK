@@ -1,4 +1,4 @@
-// Database setup script
+// Script thiết lập cơ sở dữ liệu
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
@@ -7,10 +7,10 @@ async function setupDatabase() {
     let connection;
     
     try {
-        // Get MySQL password from environment or use empty string
+        // Lấy mật khẩu MySQL từ biến môi trường hoặc sử dụng chuỗi rỗng
         const dbPassword = process.env.DB_PASSWORD || "";
         
-        // Connect to MySQL without specifying a database
+        // Kết nối tới MySQL mà không chỉ định cơ sở dữ liệu
         console.log('Connecting to MySQL...');
         connection = await mysql.createConnection({
             host: "localhost",
@@ -20,19 +20,19 @@ async function setupDatabase() {
 
         console.log('✓ Connected to MySQL');
 
-        // Create database if it doesn't exist
+        // Tạo cơ sở dữ liệu nếu chưa tồn tại
         console.log('Creating database...');
         await connection.query('CREATE DATABASE IF NOT EXISTS healthbot');
         console.log('✓ Database "healthbot" created or already exists');
 
-        // Use the database
+        // Sử dụng cơ sở dữ liệu
         await connection.query('USE healthbot');
 
-        // Read and execute the SQL file
+        // Đọc và thực thi file SQL
         const sqlPath = path.join(__dirname, 'database.sql');
         const sqlContent = fs.readFileSync(sqlPath, 'utf8');
         
-        // Split by semicolon and execute each statement
+        // Tách theo dấu chấm phẩy và thực thi từng câu lệnh
         const statements = sqlContent
             .split(';')
             .map(stmt => stmt.trim())
@@ -40,15 +40,15 @@ async function setupDatabase() {
 
         console.log('Creating tables...');
         for (const statement of statements) {
-            if (statement.includes('CREATE DATABASE')) continue; // Skip CREATE DATABASE
-            if (statement.includes('USE healthbot')) continue; // Skip USE
+            if (statement.includes('CREATE DATABASE')) continue; // Bỏ qua CREATE DATABASE
+            if (statement.includes('USE healthbot')) continue; // Bỏ qua USE
             
             await connection.query(statement);
         }
 
         console.log('✓ Tables created successfully');
         
-        // Verify tables
+        // Xác minh các bảng
         const [tables] = await connection.query('SHOW TABLES');
         console.log('\nCreated tables:');
         tables.forEach(table => {
@@ -83,5 +83,5 @@ async function setupDatabase() {
     }
 }
 
-// Run the setup
+// Chạy thiết lập
 setupDatabase();

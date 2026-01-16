@@ -55,12 +55,12 @@ export default function Chatbot() {
   const [autoSpeak, setAutoSpeak] = useState(true);
   const recordingRef = useRef<Audio.Recording | null>(null);
 
-  // Auto scroll to bottom when new messages arrive
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [chatHistory]);
 
-  // Typing animation
+  // Hiệu ứng đang nhập
   useEffect(() => {
     if (isLoading) {
       Animated.loop(
@@ -80,21 +80,21 @@ export default function Chatbot() {
     }
   }, [isLoading]);
 
-  // Load chat sessions when authenticated
+  // Tải các phiên chat khi đã xác thực
   useEffect(() => {
     if (isAuthenticated) {
       loadChatSessions();
     } else {
-      // Clear history when logged out
+      // Xóa lịch sử khi đăng xuất
       setChatSessions([]);
       setCurrentSessionId(null);
       setChatHistory([]);
     }
   }, [isAuthenticated]);
 
-  // Save message to database when chat history changes
+  // Lưu tin nhắn vào cơ sở dữ liệu khi lịch sử chat thay đổi
   useEffect(() => {
-    // Auto-save is handled in handleSubmit now
+    // Tự động lưu được xử lý trong handleSubmit bây giờ
   }, [chatHistory, currentSessionId, isAuthenticated]);
 
   const loadChatSessions = async () => {
@@ -262,7 +262,7 @@ export default function Chatbot() {
 
     let sessionId = currentSessionId;
 
-    // Create new session if authenticated and no current session
+    // Tạo phiên mới nếu đã xác thực và chưa có phiên hiện tại
     if (isAuthenticated && token && !currentSessionId) {
       try {
         const response = await fetch(API_ENDPOINTS.chatSessions, {
@@ -291,7 +291,7 @@ export default function Chatbot() {
       }
     }
 
-    // Add user message immediately
+    // Thêm tin nhắn người dùng ngay lập tức
     const userMessage: Message = {
       role: 'user',
       message: currentInput,
@@ -299,13 +299,13 @@ export default function Chatbot() {
     };
     setChatHistory((prev) => [...prev, userMessage]);
 
-    // Save user message to database
+    // Lưu tin nhắn người dùng vào cơ sở dữ liệu
     if (isAuthenticated && token && sessionId) {
       await saveMessageToDatabase(sessionId, 'user', currentInput);
     }
 
     try {
-      // Gửi kèm sessionId để backend load lịch sử
+      // Gửi kèm sessionId để backend tải lịch sử
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -329,16 +329,16 @@ export default function Chatbot() {
         timestamp: new Date(),
       };
 
-      // Add bot message
+      // Thêm tin nhắn bot
       setChatHistory((prev) => [...prev, botMessage]);
 
-      // Save bot message to database
+      // Lưu tin nhắn bot vào cơ sở dữ liệu
       if (isAuthenticated && token && sessionId) {
         await saveMessageToDatabase(sessionId, 'bot', data.response);
       }
     } catch (error) {
       console.error('Error:', error);
-      // Add error message
+      // Thêm tin nhắn lỗi
       const errorMessage: Message = {
         role: 'bot',
         message: 'Xin lỗi, đã xảy ra lỗi. Vui lòng kiểm tra kết nối và thử lại.',
@@ -356,12 +356,12 @@ export default function Chatbot() {
     return `${hours}:${minutes}`;
   };
 
-  // =============== VOICE CHAT FUNCTIONS ===============
+  // =============== CÁC HÀM CHAT BẰNG GIỌNG NÓI ===============
   
-  // Ref để quản lý audio player
+  // Ref để quản lý trình phát audio
   const soundRef = useRef<Audio.Sound | null>(null);
   
-  // Text-to-Speech: Sử dụng Google TTS cho giọng hay hơn, fallback về expo-speech
+  // Text-to-Speech: Sử dụng Google TTS cho giọng hay hơn, dự phòng về expo-speech
   const speakMessage = async (text: string) => {
     // Dừng nếu đang nói
     if (isSpeaking) {
@@ -372,7 +372,7 @@ export default function Chatbot() {
     setIsSpeaking(true);
     
     try {
-      // Thử dùng Google TTS trước (giọng hay hơn)
+      // Thử sử dụng Google TTS trước (giọng hay hơn)
       // Tùy chọn: 'warm' (nữ trầm ấm), 'female' (nữ chuẩn), 'male' (nam)
       const response = await fetch(API_ENDPOINTS.tts, {
         method: 'POST',
@@ -386,13 +386,13 @@ export default function Chatbot() {
       const data = await response.json();
       
       if (data.audioContent && !data.fallback) {
-        // Phát audio từ Google TTS
+        // Phát âm thanh từ Google TTS
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
         });
         
-        // Giải phóng sound cũ nếu có
+        // Giải phóng âm thanh cũ nếu có
         if (soundRef.current) {
           await soundRef.current.unloadAsync();
         }
@@ -416,7 +416,7 @@ export default function Chatbot() {
       console.log('Google TTS không khả dụng, dùng giọng mặc định');
     }
     
-    // Fallback: dùng expo-speech (giọng mặc định của thiết bị)
+    // Dự phòng: sử dụng expo-speech (giọng mặc định của thiết bị)
     try {
       await Speech.speak(text, {
         language: 'vi-VN',
@@ -431,9 +431,9 @@ export default function Chatbot() {
     }
   };
 
-  // Dừng nói
+  // Dừng đọc
   const stopSpeaking = async () => {
-    // Dừng Google TTS audio
+    // Dừng âm thanh Google TTS
     if (soundRef.current) {
       await soundRef.current.stopAsync();
       await soundRef.current.unloadAsync();
@@ -444,7 +444,7 @@ export default function Chatbot() {
     setIsSpeaking(false);
   };
 
-  // Cleanup khi component unmount
+  // Dọn dẹp khi component bị gỡ bỏ
   useEffect(() => {
     return () => {
       Speech.stop();
@@ -454,7 +454,7 @@ export default function Chatbot() {
     };
   }, []);
 
-  // Auto-speak bot response
+  // Tự động đọc phản hồi của bot
   useEffect(() => {
     if (autoSpeak && chatHistory.length > 0) {
       const lastMessage = chatHistory[chatHistory.length - 1];
@@ -464,7 +464,7 @@ export default function Chatbot() {
     }
   }, [chatHistory, isLoading, autoSpeak]);
 
-  // =============== END VOICE CHAT FUNCTIONS ===============
+  // =============== KẾT THÚC CÁC HÀM CHAT BẰNG GIỌNG NÓI ===============
 
   const renderMessage = (item: Message, index: number) => {
     const isUser = item.role === 'user';
@@ -477,7 +477,7 @@ export default function Chatbot() {
           isUser ? styles.userMessageContainer : styles.botMessageContainer,
         ]}
       >
-        {/* Bot Avatar */}
+        {/* Avatar Bot */}
         {!isUser && (
           <View style={styles.avatarContainer}>
             <View style={styles.botAvatar}>
@@ -486,7 +486,7 @@ export default function Chatbot() {
           </View>
         )}
 
-        {/* Message Content */}
+        {/* Nội dung tin nhắn */}
         <View style={styles.messageContent}>
           <View
             style={[
@@ -519,7 +519,7 @@ export default function Chatbot() {
           </Text>
         </View>
 
-        {/* User Avatar */}
+        {/* Avatar người dùng */}
         {isUser && (
           <View style={styles.avatarContainer}>
             <View style={styles.userAvatar}>
@@ -571,7 +571,7 @@ export default function Chatbot() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      {/* Header with Gradient */}
+      {/* Tiêu đề với gradient */}
       <LinearGradient
         colors={['#43cea2', '#185a9d']}
         start={{ x: 0, y: 0 }}
@@ -586,7 +586,7 @@ export default function Chatbot() {
             <Text style={styles.headerTitle}>WellBot</Text>
             <Text style={styles.headerSubtitle}>Trợ lý Sức khỏe Tâm thần</Text>
           </View>
-          {/* History Button - Only show when authenticated */}
+          {/* Nút lịch sử - Chỉ hiển thị khi đã xác thực */}
           {isAuthenticated && (
             <View style={styles.headerButtons}>
               {/* Nút bật/tắt tự động đọc */}
@@ -622,7 +622,7 @@ export default function Chatbot() {
         </View>
       </LinearGradient>
 
-      {/* Chat Area */}
+      {/* Khu vực chat */}
       <View style={styles.chatContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -633,7 +633,7 @@ export default function Chatbot() {
           keyboardDismissMode="interactive"
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {/* Welcome Message */}
+          {/* Tin nhắn chào mừng */}
           {chatHistory.length === 0 && (
             <View style={styles.welcomeContainer}>
               <View style={styles.welcomeIconContainer}>
@@ -645,7 +645,7 @@ export default function Chatbot() {
                 Hôm nay bạn cảm thấy thế nào?
               </Text>
 
-              {/* Quick Reply Buttons */}
+              {/* Nút trả lời nhanh */}
               <View style={styles.quickRepliesContainer}>
                 <TouchableOpacity
                   style={styles.quickReplyButton}
@@ -675,17 +675,17 @@ export default function Chatbot() {
             </View>
           )}
 
-          {/* Messages */}
+          {/* Tin nhắn */}
           {chatHistory.map((item, index) => renderMessage(item, index))}
 
-          {/* Typing Indicator */}
+          {/* Chỉ báo đang nhập */}
           {isLoading && renderTypingIndicator()}
           
           {/* Bottom Spacer to prevent messages from being hidden */}
           <View style={{ height: 20 }} />
         </ScrollView>
 
-        {/* Input Area */}
+        {/* Khu vực nhập liệu */}
         <View style={styles.inputWrapper}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -713,7 +713,7 @@ export default function Chatbot() {
         </View>
       </View>
 
-      {/* Chat History Modal - Only for authenticated users */}
+      {/* Modal lịch sử chat - Chỉ dành cho người dùng đã xác thực */}
       <Modal
         visible={showHistoryModal}
         animationType="slide"
@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // Header buttons for history
+  // Các nút trên thanh tiêu đề cho lịch sử
   headerButtons: {
     flexDirection: 'row',
     gap: 8,
@@ -1057,7 +1057,7 @@ const styles = StyleSheet.create({
   headerButtonIcon: {
     fontSize: 18,
   },
-  // Voice chat styles
+  // Kiểu dáng chat bằng giọng nói
   speakButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
   speakButtonText: {
     fontSize: 14,
   },
-  // Modal styles
+  // Kiểu dáng modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

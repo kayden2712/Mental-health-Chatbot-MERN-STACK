@@ -45,7 +45,7 @@ export default function BookingsScreen({ route, navigation }: BookingsScreenProp
   const [showModal, setShowModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   
-  // Medical record form
+  // Biểu mẫu hồ sơ bệnh án
   const [diagnosis, setDiagnosis] = useState('');
   const [symptoms, setSymptoms] = useState('');
   const [mentalHealthStatus, setMentalHealthStatus] = useState('');

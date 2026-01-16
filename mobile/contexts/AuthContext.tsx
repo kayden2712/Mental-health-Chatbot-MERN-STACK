@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Hiển thị loading trong khi kiểm tra token
   if (isLoading) {
-    return null; // Hoặc có thể return một Loading component
+    return null; // Hoặc có thể trả về một component Loading
   }
 
   return (

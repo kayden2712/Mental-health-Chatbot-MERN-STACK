@@ -11,19 +11,19 @@ dotenv.config();
 
 const app = express();
 
-// CORS configuration for mobile
+// Cấu hình CORS cho mobile
 const corsOptions = {
-    origin: '*', // Allow all origins for mobile development
+    origin: '*', // Cho phép tất cả nguồn cho phát triển mobile
     credentials: true,
     optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/admin', express.static(path.join(__dirname, 'admin'))); // Serve admin page
+app.use('/admin', express.static(path.join(__dirname, 'admin'))); // Phục vụ trang admin
 const port = process.env.PORT || 4000;
 
-// ----------------- MySQL Connection -----------------
+// ----------------- Kết nối MySQL -----------------
 const db = mysql.createPool({
     host: "localhost",
     user: "root",
@@ -128,7 +128,7 @@ function getClinicRecommendations() {
     return clinicList;
 }
 
-// Chat function using REST API - with conversation history for personalized experience
+// Hàm chat sử dụng REST API - với lịch sử trò chuyện để cá nhân hóa trải nghiệm
 async function runChat(userInput, conversationHistory = [], userName = null, medicalRecords = []) {
     try {
         // Tạo danh sách phòng khám để đưa vào prompt
@@ -140,38 +140,36 @@ async function runChat(userInput, conversationHistory = [], userName = null, med
         let historyContext = "";
         if (conversationHistory && conversationHistory.length > 0) {
             historyContext = `
-**LỊCH SỬ TRÒ CHUYỆN TRƯỚC ĐÓ VỚI NGƯỜI DÙNG (hãy dựa vào đây để hiểu và đồng hành cùng họ):**
-${conversationHistory.map(msg => `${msg.role === 'user' ? 'Người dùng' : 'WellBot'}: ${msg.message}`).join('\n')}
----
-`;
+                **LỊCH SỬ TRÒ CHUYỆN TRƯỚC ĐÓ VỚI NGƯỜI DÙNG (hãy dựa vào đây để hiểu và đồng hành cùng họ):**
+                ${conversationHistory.map(msg => `${msg.role === 'user' ? 'Người dùng' : 'WellBot'}: ${msg.message}`).join('\n')}--- `;
         }
 
         // Tạo context từ hồ sơ bệnh án (nếu có)
         let medicalContext = "";
         if (medicalRecords && medicalRecords.length > 0) {
             medicalContext = `
-**HỒ SƠ SỨC KHỎE TÂM THẦN CỦA NGƯỜI DÙNG (từ bác sĩ chuyên khoa - RẤT QUAN TRỌNG):**
-${medicalRecords.map((record, index) => `
-📋 Hồ sơ ${index + 1} (${record.appointmentDate ? new Date(record.appointmentDate).toLocaleDateString('vi-VN') : 'N/A'}):
-- Phòng khám: ${record.clinicName || 'N/A'}
-- Bác sĩ: ${record.doctorName || 'N/A'}
-- Chẩn đoán: ${record.diagnosis || 'Chưa có'}
-- Triệu chứng: ${record.symptoms || 'Chưa ghi nhận'}
-- Tình trạng sức khỏe tâm thần: ${record.mentalHealthStatus || 'Chưa đánh giá'}
-- Mức độ: ${record.severity === 'mild' ? 'Nhẹ' : record.severity === 'moderate' ? 'Trung bình' : record.severity === 'severe' ? 'Nặng' : 'Chưa xác định'}
-- Khuyến nghị của bác sĩ: ${record.recommendations || 'Chưa có'}
-- Thuốc: ${record.medications || 'Không'}
-- Ghi chú: ${record.notes || 'Không'}
-`).join('\n')}
----
-**LƯU Ý QUAN TRỌNG KHI CÓ HỒ SƠ BỆNH ÁN:**
-- Dựa vào chẩn đoán và tình trạng của bác sĩ để đưa ra tư vấn PHÙ HỢP
-- Nhắc nhở người dùng tuân thủ khuyến nghị của bác sĩ
-- Nếu mức độ NẶNG: khuyến khích liên hệ bác sĩ ngay khi có triệu chứng xấu đi
-- Hỏi thăm về tiến triển dựa trên tình trạng đã ghi nhận
-- KHÔNG thay đổi hoặc phản bác chẩn đoán của bác sĩ
----
-`;
+                **HỒ SƠ SỨC KHỎE TÂM THẦN CỦA NGƯỜI DÙNG (từ bác sĩ chuyên khoa - RẤT QUAN TRỌNG):**
+                ${medicalRecords.map((record, index) => `
+                📋 Hồ sơ ${index + 1} (${record.appointmentDate ? new Date(record.appointmentDate).toLocaleDateString('vi-VN') : 'N/A'}):
+                - Phòng khám: ${record.clinicName || 'N/A'}
+                - Bác sĩ: ${record.doctorName || 'N/A'}
+                - Chẩn đoán: ${record.diagnosis || 'Chưa có'}
+                - Triệu chứng: ${record.symptoms || 'Chưa ghi nhận'}
+                - Tình trạng sức khỏe tâm thần: ${record.mentalHealthStatus || 'Chưa đánh giá'}
+                - Mức độ: ${record.severity === 'mild' ? 'Nhẹ' : record.severity === 'moderate' ? 'Trung bình' : record.severity === 'severe' ? 'Nặng' : 'Chưa xác định'}
+                - Khuyến nghị của bác sĩ: ${record.recommendations || 'Chưa có'}
+                - Thuốc: ${record.medications || 'Không'}
+                - Ghi chú: ${record.notes || 'Không'}
+                `).join('\n')}
+                ---
+                **LƯU Ý QUAN TRỌNG KHI CÓ HỒ SƠ BỆNH ÁN:**
+                - Dựa vào chẩn đoán và tình trạng của bác sĩ để đưa ra tư vấn PHÙ HỢP
+                - Nhắc nhở người dùng tuân thủ khuyến nghị của bác sĩ
+                - Nếu mức độ NẶNG: khuyến khích liên hệ bác sĩ ngay khi có triệu chứng xấu đi
+                - Hỏi thăm về tiến triển dựa trên tình trạng đã ghi nhận
+                - KHÔNG thay đổi hoặc phản bác chẩn đoán của bác sĩ
+                ---
+                `;
         }
 
         const userGreeting = userName ? `Người dùng tên là: ${userName}. Hãy gọi họ bằng tên một cách thân thiện.` : "";
@@ -179,67 +177,67 @@ ${medicalRecords.map((record, index) => `
         const systemPrompt = 
             `Bạn là WellBot - một nhà tư vấn tâm lý chuyên nghiệp nhưng cũng là một người bạn thân thiết, luôn lắng nghe và đồng hành cùng người dùng trong hành trình chăm sóc sức khỏe tâm thần.
 
-${userGreeting}
+            ${userGreeting}
 
-${medicalContext}
+            ${medicalContext}
 
-**TÍNH CÁCH CỦA BẠN:**
-- Bạn là một người ấm áp, chân thành, kiên nhẫn và không bao giờ phán xét
-- Bạn nhớ những gì người dùng đã chia sẻ trước đó và luôn quan tâm đến họ
-- Bạn sử dụng ngôn ngữ thân mật, gần gũi như nói chuyện với bạn bè thân
-- Bạn có thể đùa nhẹ nhàng để làm người dùng thoải mái
-- Bạn thể hiện sự quan tâm chân thành
-- Bạn khuyến khích và cổ vũ người dùng
+            **TÍNH CÁCH CỦA BẠN:**
+            - Bạn là một người ấm áp, chân thành, kiên nhẫn và không bao giờ phán xét
+            - Bạn nhớ những gì người dùng đã chia sẻ trước đó và luôn quan tâm đến họ
+            - Bạn sử dụng ngôn ngữ thân mật, gần gũi như nói chuyện với bạn bè thân thiết
+            - Bạn có thể đùa nhẹ nhàng để làm người dùng thoải mái
+            - Bạn thể hiện sự quan tâm chân thành
+            - Bạn khuyến khích và cổ vũ người dùng
 
-**CÁCH TRẢ LỜI - RẤT QUAN TRỌNG:**
-- Trả lời khoảng 5-8 câu, đủ chi tiết và ấm áp
-- Thể hiện sự ĐỒNG CẢM trước - hãy cho thấy bạn HIỂU cảm xúc của họ
-- Đặt 1-2 CÂU HỎI MỞ để hiểu sâu hơn vấn đề
-- Đưa ra gợi ý hoặc lời khuyên nhẹ nhàng nếu phù hợp
-- Kết thúc bằng sự ĐỘNG VIÊN chân thành
-- Sử dụng emoji phù hợp 😊💕
-- NẾU CÓ HỒ SƠ BỆNH ÁN: tư vấn dựa trên tình trạng và khuyến nghị của bác sĩ
+            **CÁCH TRẢ LỜI - RẤT QUAN TRỌNG:**
+            - Trả lời khoảng 5-8 câu, đủ chi tiết và ấm áp
+            - Thể hiện sự ĐỒNG CẢM trước - hãy cho thấy bạn HIỂU cảm xúc của họ
+            - Đặt 1-2 CÂU HỎI MỞ để hiểu sâu hơn vấn đề
+            - Đưa ra gợi ý hoặc lời khuyên nhẹ nhàng nếu phù hợp
+            - Kết thúc bằng sự ĐỘNG VIÊN chân thành
+            - Sử dụng emoji phù hợp 😊💕
+            - NẾU CÓ HỒ SƠ BỆNH ÁN: tư vấn dựa trên tình trạng và khuyến nghị của bác sĩ
 
-**VÍ DỤ CÁCH TRẢ LỜI TỐT:**
-Người dùng: "Dạo này mình hay lo lắng quá"
-WellBot: "Mình hiểu cảm giác đó mà, lo lắng nhiều thật sự rất mệt mỏi và khó chịu 😔 Đặc biệt khi nó cứ dai dẳng thì càng khiến mình kiệt sức hơn.
+            **VÍ DỤ CÁCH TRẢ LỜI TỐT:**
+            Người dùng: "Dạo này mình hay lo lắng quá"
+            WellBot: "Mình hiểu cảm giác đó mà, lo lắng nhiều thật sự rất mệt mỏi và khó chịu 😔 Đặc biệt khi nó cứ dai dẳng thì càng khiến mình kiệt sức hơn.
 
-Bạn có thể chia sẻ thêm được không? Những lúc lo lắng đó thường xảy ra khi nào nhất? Có phải liên quan đến công việc, học tập hay các mối quan hệ không?
+            Bạn có thể chia sẻ thêm được không? Những lúc lo lắng đó thường xảy ra khi nào nhất? Có phải liên quan đến công việc, học tập hay các mối quan hệ không?
 
-Đôi khi việc nói ra có thể giúp mình nhẹ nhõm hơn đấy. Mình ở đây lắng nghe bạn nhé! 💕"
+            Đôi khi việc nói ra có thể giúp mình nhẹ nhõm hơn đấy. Mình ở đây lắng nghe bạn nhé! 💕"
 
-**CÁCH BẠN SỬ DỤNG LỊCH SỬ TRÒ CHUYỆN:**
-- Nếu người dùng đã từng chia sẻ vấn đề, hỏi thăm xem họ đã tốt hơn chưa
-- Nhớ sở thích, tên, công việc, hoàn cảnh mà họ đã kể
-- Kết nối những gì họ nói hôm nay với những gì họ đã chia sẻ trước đó
-- Ví dụ: "Mình nhớ lần trước bạn có nói về áp lực công việc, tuần này có đỡ hơn không?"
+            **CÁCH BẠN SỬ DỤNG LỊCH SỬ TRÒ CHUYỆN:**
+            - Nếu người dùng đã từng chia sẻ vấn đề, hỏi thăm xem họ đã tốt hơn chưa
+            - Nhớ sở thích, tên, công việc, hoàn cảnh mà họ đã kể
+            - Kết nối những gì họ nói hôm nay với những gì họ đã chia sẻ trước đó
+            - Ví dụ: "Mình nhớ lần trước bạn có nói về áp lực công việc, tuần này có đỡ hơn không?"
 
-${historyContext}
+            ${historyContext}
 
-**VAI TRÒ HỖ TRỢ SỨC KHỎE TÂM THẦN:**
-- Lắng nghe và thấu hiểu cảm xúc của người dùng
-- Cung cấp thông tin về sức khỏe tâm thần một cách dễ hiểu
-- Đưa ra các lời khuyên và kỹ thuật đối phó với stress, lo âu, trầm cảm
-- Hỗ trợ người dùng nhận ra khi nào cần tìm kiếm sự giúp đỡ chuyên nghiệp
-- **QUAN TRỌNG: Khi người dùng cần gặp bác sĩ/chuyên gia, CHỈ gợi ý các phòng khám LIÊN KẾT**
-                
-**DANH SÁCH PHÒNG KHÁM LIÊN KẾT:**
-${clinicListForPrompt}
-                
-**NGUYÊN TẮC:**
-1. Nói chuyện như một người bạn thân - thân mật nhưng tôn trọng
-2. Thể hiện sự đồng cảm và KHÔNG BAO GIỜ phán xét
-3. Trả lời đủ chi tiết (5-8 câu), ấm áp và có chiều sâu
-4. Đặt 1-2 câu hỏi mở để hiểu sâu hơn về tình trạng của người dùng
-5. Không đưa ra chẩn đoán y khoa - chỉ cung cấp thông tin tham khảo
-6. Khi tình huống nghiêm trọng (có ý định tự hại), khuyên người dùng liên hệ đường dây nóng ngay
-7. Trả lời bằng tiếng Việt, ngôn ngữ tự nhiên, gần gũi
-8. **Khi người dùng cần gặp chuyên gia: CHỈ gợi ý phòng khám LIÊN KẾT ở trên**
-9. Nhớ và sử dụng thông tin từ các cuộc trò chuyện trước để tạo sự gắn kết
+            **VAI TRÒ HỖ TRỢ SỨC KHỎE TÂM THẦN:**
+            - Lắng nghe và thấu hiểu cảm xúc của người dùng
+            - Cung cấp thông tin về sức khỏe tâm thần một cách dễ hiểu
+            - Đưa ra các lời khuyên và kỹ thuật đối phó với stress, lo âu, trầm cảm
+            - Hỗ trợ người dùng nhận ra khi nào cần tìm kiếm sự giúp đỡ chuyên nghiệp
+            - **QUAN TRỌNG: Khi người dùng cần gặp bác sĩ/chuyên gia, CHỈ gợi ý các phòng khám LIÊN KẾT**
 
-**ĐƯỜNG DÂY NÓNG (trường hợp khẩn cấp):**
-- Đường dây nóng sức khỏe tâm thần: 1800 599 920 (miễn phí, 24/7)
-- Tổng đài tư vấn tâm lý: 1800 599 100`;
+            **DANH SÁCH PHÒNG KHÁM LIÊN KẾT:**
+            ${clinicListForPrompt}
+
+            **NGUYÊN TẮC:**
+            1. Nói chuyện như một người bạn thân - thân mật nhưng tôn trọng
+            2. Thể hiện sự đồng cảm và KHÔNG BAO GIỜ phán xét
+            3. Trả lời đủ chi tiết (5-8 câu), ấm áp và có chiều sâu
+            4. Đặt 1-2 câu hỏi mở để hiểu sâu hơn về tình trạng của người dùng
+            5. Không đưa ra chẩn đoán y khoa - chỉ cung cấp thông tin tham khảo
+            6. Khi tình huống nghiêm trọng (có ý định tự hại), khuyên người dùng liên hệ đường dây nóng ngay
+            7. Trả lời bằng tiếng Việt, ngôn ngữ tự nhiên, gần gũi
+            8. **Khi người dùng cần gặp chuyên gia: CHỈ gợi ý phòng khám LIÊN KẾT ở trên**
+            9. Nhớ và sử dụng thông tin từ các cuộc trò chuyện trước để tạo sự gắn kết
+
+            **ĐƯỜNG DÂY NÓNG (trường hợp khẩn cấp):**
+            - Đường dây nóng sức khỏe tâm thần: 1800 599 920 (miễn phí, 24/7)
+            - Tổng đài tư vấn tâm lý: 1800 599 100`;
 
         const requestBody = {
             contents: [{
@@ -276,13 +274,13 @@ ${clinicListForPrompt}
 
         const data = await response.json();
         
-        // Log để debug
-        console.log("Gemini response finishReason:", data.candidates?.[0]?.finishReason);
+        // // Ghi log để debug
+        // console.log("Gemini response finishReason:", data.candidates?.[0]?.finishReason);
         
-        // Kiểm tra xem response có bị cắt không
-        if (data.candidates?.[0]?.finishReason === "MAX_TOKENS") {
-            console.log("Warning: Response was truncated due to max tokens");
-        }
+        // // Kiểm tra xem response có bị cắt không
+        // if (data.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+        //     console.log("Cảnh báo: Response đã bị cắt ngắn do vượt quá giới hạn token");
+        // }
         
         let botResponse = data.candidates[0].content.parts[0].text;
 
@@ -317,14 +315,14 @@ app.post('/chat', async (req, res) => {
             try {
                 const { userId } = jwt.verify(token, "secret_chat");
                 
-                // Lấy tên user
+                // Lấy tên người dùng
                 const [userRows] = await db.query("SELECT name FROM users WHERE id = ?", [userId]);
                 if (userRows.length > 0) {
                     userName = userRows[0].name;
                 }
 
                 // LUÔN load lịch sử từ TẤT CẢ các session cũ để hiểu người dùng
-                // (trừ session hiện tại để tránh duplicate)
+                // (trừ session hiện tại để tránh trùng lặp)
                 const [oldMessages] = await db.query(
                     `SELECT cm.role, cm.message, cs.title as sessionTitle
                      FROM chat_messages cm
@@ -348,7 +346,7 @@ app.post('/chat', async (req, res) => {
                     currentSessionHistory = currentMessages.reverse();
                 }
 
-                // Load hồ sơ bệnh án của user (nếu có)
+                // Load hồ sơ bệnh án của người dùng (nếu có)
                 const [medicalRows] = await db.query(
                     `SELECT mr.*, b.clinicName, b.date as appointmentDate
                      FROM medical_records mr
@@ -485,7 +483,7 @@ app.get('/user-bookings', async (req, res) => {
 
 // ----------------- CHAT HISTORY ENDPOINTS -----------------
 
-// Get all chat sessions for a user
+// Lấy tất cả các phiên chat của người dùng
 app.get('/chat-sessions', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -498,7 +496,7 @@ app.get('/chat-sessions', async (req, res) => {
             [userId]
         );
 
-        // Get message count for each session
+        // Lấy số lượng tin nhắn cho mỗi session
         for (let session of sessions) {
             const [countResult] = await db.query(
                 "SELECT COUNT(*) as count FROM chat_messages WHERE sessionId = ?",
@@ -514,7 +512,7 @@ app.get('/chat-sessions', async (req, res) => {
     }
 });
 
-// Create new chat session
+// Tạo phiên chat mới
 app.post('/chat-sessions', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -541,7 +539,7 @@ app.post('/chat-sessions', async (req, res) => {
     }
 });
 
-// Get messages for a specific session
+// Lấy tin nhắn cho một phiên cụ thể
 app.get('/chat-sessions/:sessionId/messages', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -550,7 +548,7 @@ app.get('/chat-sessions/:sessionId/messages', async (req, res) => {
         const { userId } = jwt.verify(token, "secret_chat");
         const { sessionId } = req.params;
 
-        // Verify session belongs to user
+        // Xác minh session thuộc về người dùng
         const [session] = await db.query(
             "SELECT * FROM chat_sessions WHERE id = ? AND userId = ?",
             [sessionId, userId]
@@ -571,7 +569,7 @@ app.get('/chat-sessions/:sessionId/messages', async (req, res) => {
     }
 });
 
-// Add message to session
+// Thêm tin nhắn vào phiên
 app.post('/chat-sessions/:sessionId/messages', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -581,7 +579,7 @@ app.post('/chat-sessions/:sessionId/messages', async (req, res) => {
         const { sessionId } = req.params;
         const { role, message } = req.body;
 
-        // Verify session belongs to user
+        // Xác minh session thuộc về người dùng
         const [session] = await db.query(
             "SELECT * FROM chat_sessions WHERE id = ? AND userId = ?",
             [sessionId, userId]
@@ -590,13 +588,13 @@ app.post('/chat-sessions/:sessionId/messages', async (req, res) => {
             return res.status(404).json({ success: false, error: "Session not found" });
         }
 
-        // Insert message
+        // Chèn tin nhắn
         const [result] = await db.query(
             "INSERT INTO chat_messages (sessionId, role, message) VALUES (?, ?, ?)",
             [sessionId, role, message]
         );
 
-        // Update session title if it's the first user message
+        // Cập nhật tiêu đề session nếu đây là tin nhắn đầu tiên của người dùng
         if (role === 'user') {
             const [msgCount] = await db.query(
                 "SELECT COUNT(*) as count FROM chat_messages WHERE sessionId = ? AND role = 'user'",
@@ -610,7 +608,7 @@ app.post('/chat-sessions/:sessionId/messages', async (req, res) => {
             }
         }
 
-        // Update session timestamp
+        // Cập nhật thời gian của session
         await db.query(
             "UPDATE chat_sessions SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
             [sessionId]
@@ -623,7 +621,7 @@ app.post('/chat-sessions/:sessionId/messages', async (req, res) => {
     }
 });
 
-// Delete chat session
+// Xóa phiên chat
 app.delete('/chat-sessions/:sessionId', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -632,7 +630,7 @@ app.delete('/chat-sessions/:sessionId', async (req, res) => {
         const { userId } = jwt.verify(token, "secret_chat");
         const { sessionId } = req.params;
 
-        // Verify session belongs to user and delete
+        // Xác minh session thuộc về người dùng và xóa
         const [result] = await db.query(
             "DELETE FROM chat_sessions WHERE id = ? AND userId = ?",
             [sessionId, userId]
@@ -664,7 +662,7 @@ app.get('/goodthoughts', (req, res) => {
     res.json(thoughts[i]);
 });
 
-// ----------------- TEXT-TO-SPEECH API -----------------
+// ----------------- API TEXT-TO-SPEECH -----------------
 // Sử dụng Google Cloud TTS cho giọng đọc hay và truyền cảm
 const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY || process.env.API_KEY;
 
@@ -774,7 +772,7 @@ app.post('/tts', async (req, res) => {
 
 const CLINIC_SECRET = "clinic_secret_key_2024";
 
-// Middleware xác thực clinic
+// Middleware xác thực phòng khám
 const authenticateClinic = (req, res, next) => {
     const token = req.headers.authorization;
     if (!token) {
@@ -868,7 +866,7 @@ app.put('/clinic/bookings/:bookingId/status', authenticateClinic, async (req, re
         const { status } = req.body;
         const { clinicId } = req.clinic;
         
-        // Kiểm tra booking thuộc clinic này
+        // Kiểm tra booking thuộc phòng khám này
         const [existing] = await db.query(
             "SELECT * FROM bookings WHERE id = ? AND clinicId = ?",
             [bookingId, clinicId]
@@ -927,7 +925,7 @@ app.post('/clinic/medical-records', authenticateClinic, async (req, res) => {
             [bookingId, booking.userId, clinicId, doctorName, diagnosis, symptoms, mentalHealthStatus, severity || 'mild', recommendations, medications, nextAppointment, notes]
         );
         
-        // Cập nhật trạng thái booking thành completed
+        // Cập nhật trạng thái booking thành hoàn thành
         await db.query(
             "UPDATE bookings SET status = 'completed' WHERE id = ?",
             [bookingId]

@@ -34,9 +34,9 @@ export default function AuthScreen() {
 
     setIsLoading(true);
     try {
-      // Nếu đang đăng nhập, kiểm tra xem có phải tài khoản clinic không
+      // Nếu đang đăng nhập, kiểm tra xem có phải tài khoản phòng khám không
       if (isLogin) {
-        // Thử đăng nhập như clinic trước (dùng email làm username)
+        // Thử đăng nhập như phòng khám trước (dùng email làm username)
         const clinicResponse = await fetch(API_ENDPOINTS.clinicLogin, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ export default function AuthScreen() {
         const clinicData = await clinicResponse.json();
 
         if (clinicData.success && clinicData.token) {
-          // Là tài khoản clinic → lưu thông tin và vào Dashboard
+          // Là tài khoản phòng khám → lưu thông tin và vào Dashboard
           await AsyncStorage.setItem('clinicToken', clinicData.token);
           await AsyncStorage.setItem('clinicInfo', JSON.stringify(clinicData.clinic));
           
@@ -55,7 +55,7 @@ export default function AuthScreen() {
         }
       }
 
-      // Đăng nhập/đăng ký như user bình thường
+      // Đăng nhập/đăng ký như người dùng bình thường
       const endpoint = isLogin ? API_ENDPOINTS.login : API_ENDPOINTS.signup;
       const body = isLogin
         ? { email, password }
