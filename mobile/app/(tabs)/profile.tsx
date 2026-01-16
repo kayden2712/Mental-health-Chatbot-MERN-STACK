@@ -16,16 +16,16 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Hủy', style: 'cancel' },
         {
-          text: 'Logout',
+          text: 'Đăng xuất',
           style: 'destructive',
           onPress: async () => {
             await logout();
-            Alert.alert('Success', 'Logged out successfully!');
+            Alert.alert('Thành công', 'Đã đăng xuất thành công!');
           },
         },
       ]
@@ -47,50 +47,50 @@ export default function ProfileScreen() {
             <Text style={styles.avatarText}>👤</Text>
           </View>
 
-          <Text style={styles.welcomeText}>Welcome to WellBot!</Text>
-          <Text style={styles.subtitleText}>Your Mental Health Companion</Text>
+          <Text style={styles.welcomeText}>Chào mừng đến WellBot!</Text>
+          <Text style={styles.subtitleText}>Trợ lý Sức khỏe Tâm thần của bạn</Text>
 
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>💬</Text>
-              <Text style={styles.statLabel}>Chat Support</Text>
+              <Text style={styles.statLabel}>Hỗ trợ Chat</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>📅</Text>
-              <Text style={styles.statLabel}>Book Sessions</Text>
+              <Text style={styles.statLabel}>Đặt lịch khám</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>✨</Text>
-              <Text style={styles.statLabel}>Daily Motivation</Text>
+              <Text style={styles.statLabel}>Động lực hàng ngày</Text>
             </View>
           </View>
 
           <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>About WellBot</Text>
+            <Text style={styles.sectionTitle}>Giới thiệu WellBot</Text>
             <Text style={styles.infoText}>
-              WellBot is your personal mental health companion, providing 24/7 support,
-              professional booking services, and daily motivational content to help you
-              maintain positive mental wellbeing.
+              WellBot là trợ lý sức khỏe tâm thần cá nhân của bạn, cung cấp hỗ trợ 24/7,
+              dịch vụ đặt lịch chuyên nghiệp và nội dung động lực hàng ngày để giúp bạn
+              duy trì sức khỏe tinh thần tốt.
             </Text>
           </View>
 
           <View style={styles.featuresSection}>
-            <Text style={styles.sectionTitle}>Features</Text>
+            <Text style={styles.sectionTitle}>Tính năng</Text>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>🤖</Text>
-              <Text style={styles.featureText}>AI-powered mental health chatbot</Text>
+              <Text style={styles.featureText}>Chatbot AI hỗ trợ sức khỏe tâm thần</Text>
             </View>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>📱</Text>
-              <Text style={styles.featureText}>Easy appointment booking</Text>
+              <Text style={styles.featureText}>Đặt lịch hẹn dễ dàng</Text>
             </View>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>💭</Text>
-              <Text style={styles.featureText}>Daily positive thoughts</Text>
+              <Text style={styles.featureText}>Suy nghĩ tích cực hàng ngày</Text>
             </View>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>🔒</Text>
-              <Text style={styles.featureText}>Secure and confidential</Text>
+              <Text style={styles.featureText}>Bảo mật và riêng tư</Text>
             </View>
           </View>
 
@@ -98,7 +98,7 @@ export default function ProfileScreen() {
             style={styles.logoutButton}
             onPress={handleLogout}
           >
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Text style={styles.logoutButtonText}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

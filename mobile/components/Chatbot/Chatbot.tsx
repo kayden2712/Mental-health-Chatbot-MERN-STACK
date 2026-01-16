@@ -11,9 +11,15 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Modal,
+  FlatList,
+  Alert,
 } from 'react-native';
 import { API_ENDPOINTS } from '@/constants/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/contexts/AuthContext';
+import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 
 interface Message {
   role: 'user' | 'bot';
@@ -21,14 +27,33 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  id: number;
+  title: string;
+  messageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const { width } = Dimensions.get('window');
 
 export default function Chatbot() {
+  const { isAuthenticated, token } = useAuth();
   const [userInput, setUserInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const typingAnimation = useRef(new Animated.Value(0)).current;
+  
+  // Voice chat states
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const recordingRef = useRef<Audio.Recording | null>(null);
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -55,12 +80,216 @@ export default function Chatbot() {
     }
   }, [isLoading]);
 
+  // Load chat sessions when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadChatSessions();
+    } else {
+      // Clear history when logged out
+      setChatSessions([]);
+      setCurrentSessionId(null);
+      setChatHistory([]);
+    }
+  }, [isAuthenticated]);
+
+  // Save message to database when chat history changes
+  useEffect(() => {
+    // Auto-save is handled in handleSubmit now
+  }, [chatHistory, currentSessionId, isAuthenticated]);
+
+  const loadChatSessions = async () => {
+    if (!token) return;
+    setIsLoadingSessions(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.chatSessions, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        const sessions: ChatSession[] = data.sessions.map((s: any) => ({
+          ...s,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+        }));
+        setChatSessions(sessions);
+      }
+    } catch (error) {
+      console.error('Error loading chat sessions:', error);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  const saveMessageToDatabase = async (sessionId: number, role: 'user' | 'bot', message: string) => {
+    if (!token) return;
+    try {
+      await fetch(API_ENDPOINTS.chatSessionMessages(sessionId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({ role, message }),
+      });
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
+
+  const startNewSession = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.chatSessions, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({ title: 'Cuộc trò chuyện mới' }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        const newSession: ChatSession = {
+          ...data.session,
+          messageCount: 0,
+          createdAt: new Date(data.session.createdAt),
+          updatedAt: new Date(data.session.updatedAt),
+        };
+        setChatSessions([newSession, ...chatSessions]);
+        setCurrentSessionId(newSession.id);
+        setChatHistory([]);
+        setShowHistoryModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating new session:', error);
+      Alert.alert('Lỗi', 'Không thể tạo cuộc trò chuyện mới');
+    }
+  };
+
+  const loadSession = async (session: ChatSession) => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.chatSessionMessages(session.id), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        const messages: Message[] = data.messages.map((m: any) => ({
+          role: m.role,
+          message: m.message,
+          timestamp: new Date(m.createdAt),
+        }));
+        setCurrentSessionId(session.id);
+        setChatHistory(messages);
+        setShowHistoryModal(false);
+      }
+    } catch (error) {
+      console.error('Error loading session messages:', error);
+      Alert.alert('Lỗi', 'Không thể tải tin nhắn');
+    }
+  };
+
+  const deleteSession = async (sessionId: number) => {
+    Alert.alert(
+      'Xóa cuộc trò chuyện',
+      'Bạn có chắc muốn xóa cuộc trò chuyện này?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            if (!token) return;
+            
+            try {
+              const response = await fetch(API_ENDPOINTS.deleteSession(sessionId), {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': token,
+                },
+              });
+              const data = await response.json();
+              
+              if (data.success) {
+                const updatedSessions = chatSessions.filter((s) => s.id !== sessionId);
+                setChatSessions(updatedSessions);
+                
+                if (currentSessionId === sessionId) {
+                  setCurrentSessionId(null);
+                  setChatHistory([]);
+                }
+              }
+            } catch (error) {
+              console.error('Error deleting session:', error);
+              Alert.alert('Lỗi', 'Không thể xóa cuộc trò chuyện');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Hôm nay';
+    if (days === 1) return 'Hôm qua';
+    if (days < 7) return `${days} ngày trước`;
+    return date.toLocaleDateString('vi-VN');
+  };
+
   const handleSubmit = async () => {
     if (!userInput.trim()) return;
 
     const currentInput = userInput;
     setUserInput('');
     setIsLoading(true);
+
+    let sessionId = currentSessionId;
+
+    // Create new session if authenticated and no current session
+    if (isAuthenticated && token && !currentSessionId) {
+      try {
+        const response = await fetch(API_ENDPOINTS.chatSessions, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+          },
+          body: JSON.stringify({ title: currentInput.slice(0, 50) }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          const newSession: ChatSession = {
+            ...data.session,
+            messageCount: 0,
+            createdAt: new Date(data.session.createdAt),
+            updatedAt: new Date(data.session.updatedAt),
+          };
+          setChatSessions([newSession, ...chatSessions]);
+          setCurrentSessionId(newSession.id);
+          sessionId = newSession.id;
+        }
+      } catch (error) {
+        console.error('Error creating new session:', error);
+      }
+    }
 
     // Add user message immediately
     const userMessage: Message = {
@@ -70,13 +299,27 @@ export default function Chatbot() {
     };
     setChatHistory((prev) => [...prev, userMessage]);
 
+    // Save user message to database
+    if (isAuthenticated && token && sessionId) {
+      await saveMessageToDatabase(sessionId, 'user', currentInput);
+    }
+
     try {
+      // Gửi kèm sessionId để backend load lịch sử
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = token;
+      }
+
       const response = await fetch(API_ENDPOINTS.chat, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userInput: currentInput }),
+        headers,
+        body: JSON.stringify({ 
+          userInput: currentInput,
+          sessionId: sessionId 
+        }),
       });
 
       const data = await response.json();
@@ -88,12 +331,17 @@ export default function Chatbot() {
 
       // Add bot message
       setChatHistory((prev) => [...prev, botMessage]);
+
+      // Save bot message to database
+      if (isAuthenticated && token && sessionId) {
+        await saveMessageToDatabase(sessionId, 'bot', data.response);
+      }
     } catch (error) {
       console.error('Error:', error);
       // Add error message
       const errorMessage: Message = {
         role: 'bot',
-        message: 'Sorry, I encountered an error. Please check your connection and try again.',
+        message: 'Xin lỗi, đã xảy ra lỗi. Vui lòng kiểm tra kết nối và thử lại.',
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, errorMessage]);
@@ -107,6 +355,116 @@ export default function Chatbot() {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   };
+
+  // =============== VOICE CHAT FUNCTIONS ===============
+  
+  // Ref để quản lý audio player
+  const soundRef = useRef<Audio.Sound | null>(null);
+  
+  // Text-to-Speech: Sử dụng Google TTS cho giọng hay hơn, fallback về expo-speech
+  const speakMessage = async (text: string) => {
+    // Dừng nếu đang nói
+    if (isSpeaking) {
+      await stopSpeaking();
+      return;
+    }
+
+    setIsSpeaking(true);
+    
+    try {
+      // Thử dùng Google TTS trước (giọng hay hơn)
+      // Tùy chọn: 'warm' (nữ trầm ấm), 'female' (nữ chuẩn), 'male' (nam)
+      const response = await fetch(API_ENDPOINTS.tts, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text,
+          voiceType: 'warm' // Giọng nữ trầm ấm, truyền cảm
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.audioContent && !data.fallback) {
+        // Phát audio từ Google TTS
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+        
+        // Giải phóng sound cũ nếu có
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync();
+        }
+        
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: `data:audio/mp3;base64,${data.audioContent}` },
+          { shouldPlay: true }
+        );
+        
+        soundRef.current = sound;
+        
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsSpeaking(false);
+          }
+        });
+        
+        return;
+      }
+    } catch (error) {
+      console.log('Google TTS không khả dụng, dùng giọng mặc định');
+    }
+    
+    // Fallback: dùng expo-speech (giọng mặc định của thiết bị)
+    try {
+      await Speech.speak(text, {
+        language: 'vi-VN',
+        pitch: 1.1,      // Cao hơn một chút
+        rate: 0.85,      // Chậm hơn để rõ ràng
+        onDone: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    } catch (error) {
+      console.error('Speech error:', error);
+      setIsSpeaking(false);
+    }
+  };
+
+  // Dừng nói
+  const stopSpeaking = async () => {
+    // Dừng Google TTS audio
+    if (soundRef.current) {
+      await soundRef.current.stopAsync();
+      await soundRef.current.unloadAsync();
+      soundRef.current = null;
+    }
+    // Dừng expo-speech
+    await Speech.stop();
+    setIsSpeaking(false);
+  };
+
+  // Cleanup khi component unmount
+  useEffect(() => {
+    return () => {
+      Speech.stop();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Auto-speak bot response
+  useEffect(() => {
+    if (autoSpeak && chatHistory.length > 0) {
+      const lastMessage = chatHistory[chatHistory.length - 1];
+      if (lastMessage.role === 'bot' && !isLoading) {
+        speakMessage(lastMessage.message);
+      }
+    }
+  }, [chatHistory, isLoading, autoSpeak]);
+
+  // =============== END VOICE CHAT FUNCTIONS ===============
 
   const renderMessage = (item: Message, index: number) => {
     const isUser = item.role === 'user';
@@ -144,6 +502,17 @@ export default function Chatbot() {
             >
               {item.message}
             </Text>
+            {/* Nút nghe cho tin nhắn bot */}
+            {!isUser && (
+              <TouchableOpacity
+                style={styles.speakButton}
+                onPress={() => speakMessage(item.message)}
+              >
+                <Text style={styles.speakButtonText}>
+                  {isSpeaking ? '⏹️' : '🔊'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
           <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
             {formatTime(item.timestamp)}
@@ -199,7 +568,7 @@ export default function Chatbot() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       {/* Header with Gradient */}
@@ -215,8 +584,41 @@ export default function Chatbot() {
           </View>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>WellBot</Text>
-            <Text style={styles.headerSubtitle}>Your Mental Health Companion</Text>
+            <Text style={styles.headerSubtitle}>Trợ lý Sức khỏe Tâm thần</Text>
           </View>
+          {/* History Button - Only show when authenticated */}
+          {isAuthenticated && (
+            <View style={styles.headerButtons}>
+              {/* Nút bật/tắt tự động đọc */}
+              <TouchableOpacity
+                style={[styles.headerButton, autoSpeak && styles.headerButtonActive]}
+                onPress={() => setAutoSpeak(!autoSpeak)}
+              >
+                <Text style={styles.headerButtonIcon}>{autoSpeak ? '🔊' : '🔇'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => setShowHistoryModal(true)}
+              >
+                <Text style={styles.headerButtonIcon}>📋</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={startNewSession}
+              >
+                <Text style={styles.headerButtonIcon}>➕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {/* Nút voice cho người dùng chưa đăng nhập */}
+          {!isAuthenticated && (
+            <TouchableOpacity
+              style={[styles.headerButton, autoSpeak && styles.headerButtonActive]}
+              onPress={() => setAutoSpeak(!autoSpeak)}
+            >
+              <Text style={styles.headerButtonIcon}>{autoSpeak ? '🔊' : '🔇'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </LinearGradient>
 
@@ -228,6 +630,8 @@ export default function Chatbot() {
           contentContainerStyle={styles.chatHistoryContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {/* Welcome Message */}
           {chatHistory.length === 0 && (
@@ -235,37 +639,37 @@ export default function Chatbot() {
               <View style={styles.welcomeIconContainer}>
                 <Text style={styles.welcomeIcon}>🌟</Text>
               </View>
-              <Text style={styles.welcomeTitle}>Welcome to WellBot!</Text>
+              <Text style={styles.welcomeTitle}>Chào mừng đến WellBot!</Text>
               <Text style={styles.welcomeSubtitle}>
-                I'm here to support your mental health journey.{'\n'}
-                How are you feeling today?
+                Tôi ở đây để hỗ trợ hành trình sức khỏe tâm thần của bạn.{'\n'}
+                Hôm nay bạn cảm thấy thế nào?
               </Text>
 
               {/* Quick Reply Buttons */}
               <View style={styles.quickRepliesContainer}>
                 <TouchableOpacity
                   style={styles.quickReplyButton}
-                  onPress={() => setUserInput("I'm feeling anxious")}
+                  onPress={() => setUserInput("Tôi đang cảm thấy lo lắng")}
                 >
-                  <Text style={styles.quickReplyText}>😰 Anxious</Text>
+                  <Text style={styles.quickReplyText}>😰 Lo lắng</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.quickReplyButton}
-                  onPress={() => setUserInput("I'm feeling happy")}
+                  onPress={() => setUserInput("Tôi đang cảm thấy vui vẻ")}
                 >
-                  <Text style={styles.quickReplyText}>😊 Happy</Text>
+                  <Text style={styles.quickReplyText}>😊 Vui vẻ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.quickReplyButton}
-                  onPress={() => setUserInput("I'm feeling stressed")}
+                  onPress={() => setUserInput("Tôi đang cảm thấy căng thẳng")}
                 >
-                  <Text style={styles.quickReplyText}>😓 Stressed</Text>
+                  <Text style={styles.quickReplyText}>😓 Căng thẳng</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.quickReplyButton}
-                  onPress={() => setUserInput("I need help")}
+                  onPress={() => setUserInput("Tôi cần giúp đỡ")}
                 >
-                  <Text style={styles.quickReplyText}>🆘 Need Help</Text>
+                  <Text style={styles.quickReplyText}>🆘 Cần giúp</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -288,10 +692,9 @@ export default function Chatbot() {
               style={styles.input}
               value={userInput}
               onChangeText={setUserInput}
-              placeholder="Type your message..."
+              placeholder="Nhập tin nhắn của bạn..."
               placeholderTextColor="#999"
               multiline
-              maxLength={500}
               editable={!isLoading}
             />
             <TouchableOpacity
@@ -309,6 +712,73 @@ export default function Chatbot() {
           </View>
         </View>
       </View>
+
+      {/* Chat History Modal - Only for authenticated users */}
+      <Modal
+        visible={showHistoryModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowHistoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>📋 Lịch sử trò chuyện</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowHistoryModal(false)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {chatSessions.length === 0 ? (
+              <View style={styles.emptyHistory}>
+                <Text style={styles.emptyHistoryIcon}>💭</Text>
+                <Text style={styles.emptyHistoryText}>Chưa có lịch sử trò chuyện</Text>
+                <Text style={styles.emptyHistorySubtext}>Bắt đầu cuộc trò chuyện mới!</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={chatSessions}
+                keyExtractor={(item) => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.sessionItem,
+                      currentSessionId === item.id && styles.sessionItemActive,
+                    ]}
+                    onPress={() => loadSession(item)}
+                  >
+                    <View style={styles.sessionInfo}>
+                      <Text style={styles.sessionTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.sessionDate}>
+                        {formatDate(item.updatedAt)} • {item.messageCount} tin nhắn
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => deleteSession(item.id)}
+                    >
+                      <Text style={styles.deleteButtonText}>🗑️</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+
+            <TouchableOpacity
+              style={styles.newChatButton}
+              onPress={startNewSession}
+            >
+              <Text style={styles.newChatButtonText}>➕ Cuộc trò chuyện mới</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -362,7 +832,7 @@ const styles = StyleSheet.create({
   },
   chatHistoryContent: {
     padding: 16,
-    paddingBottom: 20,
+    paddingBottom: 100,
   },
   welcomeContainer: {
     alignItems: 'center',
@@ -567,5 +1037,142 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  // Header buttons for history
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  headerButtonIcon: {
+    fontSize: 18,
+  },
+  // Voice chat styles
+  speakButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+  },
+  speakButtonText: {
+    fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyHistory: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyHistoryIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  emptyHistoryText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 8,
+  },
+  emptyHistorySubtext: {
+    fontSize: 14,
+    color: '#7f8c8d',
+  },
+  sessionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  sessionItemActive: {
+    backgroundColor: '#e8f5e9',
+  },
+  sessionInfo: {
+    flex: 1,
+  },
+  sessionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 4,
+  },
+  sessionDate: {
+    fontSize: 13,
+    color: '#7f8c8d',
+  },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  deleteButtonText: {
+    fontSize: 16,
+  },
+  newChatButton: {
+    backgroundColor: '#43cea2',
+    marginHorizontal: 20,
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  newChatButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

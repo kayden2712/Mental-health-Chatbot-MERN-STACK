@@ -12,6 +12,8 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '@/constants/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,15 +24,38 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async () => {
     if (!email || !password || (!isLogin && !username)) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
       return;
     }
 
     setIsLoading(true);
     try {
+      // Nếu đang đăng nhập, kiểm tra xem có phải tài khoản clinic không
+      if (isLogin) {
+        // Thử đăng nhập như clinic trước (dùng email làm username)
+        const clinicResponse = await fetch(API_ENDPOINTS.clinicLogin, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: email, password }),
+        });
+        const clinicData = await clinicResponse.json();
+
+        if (clinicData.success && clinicData.token) {
+          // Là tài khoản clinic → lưu thông tin và vào Dashboard
+          await AsyncStorage.setItem('clinicToken', clinicData.token);
+          await AsyncStorage.setItem('clinicInfo', JSON.stringify(clinicData.clinic));
+          
+          Alert.alert('Thành công', `Xin chào ${clinicData.clinic.name}!`);
+          router.push('/admin');
+          return;
+        }
+      }
+
+      // Đăng nhập/đăng ký như user bình thường
       const endpoint = isLogin ? API_ENDPOINTS.login : API_ENDPOINTS.signup;
       const body = isLogin
         ? { email, password }
@@ -48,13 +73,13 @@ export default function AuthScreen() {
 
       if (data.success && data.token) {
         await login(data.token);
-        Alert.alert('Success', isLogin ? 'Logged in successfully!' : 'Account created successfully!');
+        Alert.alert('Thành công', isLogin ? 'Đăng nhập thành công!' : 'Tạo tài khoản thành công!');
       } else {
-        Alert.alert('Error', data.error || data.errors || 'Authentication failed');
+        Alert.alert('Lỗi', data.error || data.errors || 'Xác thực thất bại');
       }
     } catch (error) {
       console.error('Auth error:', error);
-      Alert.alert('Error', 'Connection failed. Please check your network and API configuration.');
+      Alert.alert('Lỗi', 'Kết nối thất bại. Vui lòng kiểm tra mạng.');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +97,7 @@ export default function AuthScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.formContainer}>
             <Text style={styles.title}>WellBot</Text>
-            <Text style={styles.subtitle}>Mental Health Companion</Text>
+            <Text style={styles.subtitle}>Trợ lý Sức khỏe Tâm thần</Text>
 
             <View style={styles.toggleContainer}>
               <TouchableOpacity
@@ -80,7 +105,7 @@ export default function AuthScreen() {
                 onPress={() => setIsLogin(true)}
               >
                 <Text style={[styles.toggleText, isLogin && styles.activeToggleText]}>
-                  Login
+                  Đăng nhập
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -88,7 +113,7 @@ export default function AuthScreen() {
                 onPress={() => setIsLogin(false)}
               >
                 <Text style={[styles.toggleText, !isLogin && styles.activeToggleText]}>
-                  Sign Up
+                  Đăng ký
                 </Text>
               </TouchableOpacity>
             </View>
@@ -96,7 +121,7 @@ export default function AuthScreen() {
             {!isLogin && (
               <TextInput
                 style={styles.input}
-                placeholder="Username"
+                placeholder="Tên người dùng"
                 placeholderTextColor="#999"
                 value={username}
                 onChangeText={setUsername}
@@ -116,7 +141,7 @@ export default function AuthScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Mật khẩu"
               placeholderTextColor="#999"
               value={password}
               onChangeText={setPassword}
@@ -133,7 +158,7 @@ export default function AuthScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.submitButtonText}>
-                  {isLogin ? 'Login' : 'Sign Up'}
+                  {isLogin ? 'Đăng nhập' : 'Đăng ký'}
                 </Text>
               )}
             </TouchableOpacity>

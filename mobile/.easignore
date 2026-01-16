@@ -1,0 +1,7 @@
+# EAS Build ignore file
+.git
+.expo
+node_modules
+dist
+.env*
+*.log

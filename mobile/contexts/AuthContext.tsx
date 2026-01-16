@@ -12,12 +12,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Tự động load token đã lưu khi khởi chạy app
+  // Giữ trạng thái đăng nhập cho đến khi user logout
   useEffect(() => {
-    loadToken();
+    loadSavedToken();
   }, []);
 
-  const loadToken = async () => {
+  const loadSavedToken = async () => {
     try {
       const savedToken = await AsyncStorage.getItem('authToken');
       if (savedToken) {
@@ -25,6 +28,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Failed to load token:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +51,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to remove token:', error);
     }
   };
+
+  // Hiển thị loading trong khi kiểm tra token
+  if (isLoading) {
+    return null; // Hoặc có thể return một Loading component
+  }
 
   return (
     <AuthContext.Provider

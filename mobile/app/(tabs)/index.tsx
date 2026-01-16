@@ -52,7 +52,7 @@ export default function HomeScreen() {
       console.error('API endpoint:', API_ENDPOINTS.goodThoughts);
       setThought({
         id: 0,
-        joketext: 'Stay positive and keep smiling! 😊\n\n(Error connecting to server - please check if backend is running)',
+        joketext: 'Hãy sống tích cực và mỉm cười! 😊\n\n(Lỗi kết nối server - vui lòng kiểm tra backend)',
       });
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -72,15 +72,15 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>🧠 WellBot</Text>
-          <Text style={styles.subtitle}>Your Mental Health Companion</Text>
+          <Text style={styles.subtitle}>Trợ lý Sức khỏe Tâm thần của bạn</Text>
           {!isAuthenticated && (
-            <Text style={styles.loginPrompt}>👉 Login from Profile tab to access all features</Text>
+            <Text style={styles.loginPrompt}>👉 Đăng nhập từ tab Hồ sơ để sử dụng đầy đủ tính năng</Text>
           )}
         </View>
 
         {/* Daily Motivation Section */}
         <View style={styles.motivationSection}>
-          <Text style={styles.motivationTitle}>✨ Daily Motivation ✨</Text>
+          <Text style={styles.motivationTitle}>✨ Động lực hàng ngày ✨</Text>
           
           <Animated.View
             style={[
@@ -112,7 +112,7 @@ export default function HomeScreen() {
               end={{ x: 1, y: 0 }}
             >
               <Text style={styles.buttonText}>
-                {isLoading ? 'Loading...' : '🔄 Get New Thought'}
+                {isLoading ? 'Đang tải...' : '🔄 Lấy câu mới'}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -121,26 +121,26 @@ export default function HomeScreen() {
         <View style={styles.featuresContainer}>
           <View style={styles.featureCard}>
             <Text style={styles.featureIcon}>💬</Text>
-            <Text style={styles.featureTitle}>AI Chat Support</Text>
+            <Text style={styles.featureTitle}>Hỗ trợ Chat AI</Text>
             <Text style={styles.featureDescription}>
-              Talk to our empathetic AI chatbot anytime you need support
+              Trò chuyện với chatbot AI thấu hiểu bất cứ khi nào bạn cần hỗ trợ
             </Text>
             <Link href="/(tabs)/chatbot" asChild>
               <TouchableOpacity style={styles.featureButton}>
-                <Text style={styles.featureButtonText}>Start Chatting</Text>
+                <Text style={styles.featureButtonText}>Bắt đầu Chat</Text>
               </TouchableOpacity>
             </Link>
           </View>
 
           <View style={styles.featureCard}>
             <Text style={styles.featureIcon}>📅</Text>
-            <Text style={styles.featureTitle}>Book Appointments</Text>
+            <Text style={styles.featureTitle}>Đặt lịch hẹn</Text>
             <Text style={styles.featureDescription}>
-              Schedule sessions with professional therapists
+              Đặt lịch với các chuyên gia tâm lý chuyên nghiệp
             </Text>
             <Link href={"/(tabs)/booking" as any} asChild>
               <TouchableOpacity style={styles.featureButton}>
-                <Text style={styles.featureButtonText}>Book Now</Text>
+                <Text style={styles.featureButtonText}>Đặt ngay</Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -148,24 +148,24 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>Why Mental Health Matters</Text>
+          <Text style={styles.infoTitle}>Tại sao Sức khỏe Tâm thần quan trọng</Text>
           <Text style={styles.infoText}>
-            Taking care of your mental health is just as important as physical health.
-            WellBot is here to support you 24/7 with compassionate AI assistance,
-            professional resources, and daily motivation.
+            Chăm sóc sức khỏe tâm thần cũng quan trọng như sức khỏe thể chất.
+            WellBot luôn sẵn sàng hỗ trợ bạn 24/7 với trợ lý AI thấu hiểu,
+            nguồn lực chuyên nghiệp và động lực hàng ngày.
           </Text>
         </View>
 
         <View style={styles.tipsSection}>
-          <Text style={styles.tipsTitle}>Quick Tips</Text>
+          <Text style={styles.tipsTitle}>Mẹo nhanh</Text>
           <View style={styles.tipCard}>
-            <Text style={styles.tipText}>🌟 Take breaks and practice self-care</Text>
+            <Text style={styles.tipText}>🌟 Nghỉ ngơi và chăm sóc bản thân</Text>
           </View>
           <View style={styles.tipCard}>
-            <Text style={styles.tipText}>💪 Stay connected with loved ones</Text>
+            <Text style={styles.tipText}>💪 Kết nối với những người thân yêu</Text>
           </View>
           <View style={styles.tipCard}>
-            <Text style={styles.tipText}>🧘 Practice mindfulness and meditation</Text>
+            <Text style={styles.tipText}>🧘 Thực hành chánh niệm và thiền định</Text>
           </View>
         </View>
       </ScrollView>
