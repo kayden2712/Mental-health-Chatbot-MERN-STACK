@@ -1,10 +1,5 @@
-// ⚠️ IMPORTANT: For Expo Go, you MUST use your computer's IP address
-// To find your IP:
-// Windows: Run "ipconfig" in terminal, look for "IPv4 Address" (usually starts with 192.168.x.x)
-// Mac/Linux: Run "ifconfig" or "ip addr", look for inet address
-
 // TODO: Replace with your computer's IP address
-const YOUR_COMPUTER_IP = '192.168.1.5'; // ⬅️ CHANGE THIS!
+const YOUR_COMPUTER_IP = '192.168.1.5'; 
 
 const getBaseUrl = () => {
   if (__DEV__) {
