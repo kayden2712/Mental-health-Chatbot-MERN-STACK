@@ -3,7 +3,7 @@ const YOUR_COMPUTER_IP = '192.168.1.5';
 
 // TODO: Sau khi deploy lên Railway, thay thế URL này bằng Railway URL của bạn
 // Ví dụ: 'https://your-app-name.up.railway.app'
-const RAILWAY_PRODUCTION_URL = 'https://your-railway-app.up.railway.app';
+const RAILWAY_PRODUCTION_URL = 'https://mental-health-chatbot-mern-stack-production.up.railway.app';
 
 const getBaseUrl = () => {
   if (__DEV__) {
