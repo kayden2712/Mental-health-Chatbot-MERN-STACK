@@ -1,12 +1,17 @@
 // TODO: Thay thế bằng địa chỉ IP của máy tính của bạn
 const YOUR_COMPUTER_IP = '192.168.1.5'; 
+
+// TODO: Sau khi deploy lên Railway, thay thế URL này bằng Railway URL của bạn
+// Ví dụ: 'https://your-app-name.up.railway.app'
+const RAILWAY_PRODUCTION_URL = 'https://your-railway-app.up.railway.app';
+
 const getBaseUrl = () => {
   if (__DEV__) {
     // Đối với Expo Go, luôn sử dụng địa chỉ IP của máy tính của bạn
     return `http://${YOUR_COMPUTER_IP}:4000`;
   }
-  // URL sản phẩm - Backend Render
-  return 'https://wellbot-7dbu.onrender.com';
+  // URL sản phẩm - Railway Backend
+  return RAILWAY_PRODUCTION_URL;
 };
 
 export const API_BASE_URL = getBaseUrl();
